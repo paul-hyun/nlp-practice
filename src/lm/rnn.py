@@ -37,10 +37,10 @@ class LSTMLanguageModel(nn.Module):
     def forward(self, x):
         # |x| = (batch_size, seq_len)
 
-        embedded = self.dropout(self.embedding(x))
-        # |embedded| = (batch_size, seq_len, embedding_dim)
+        embed = self.dropout(self.embedding(x))
+        # |embed| = (batch_size, seq_len, embedding_dim)
 
-        output, (hidden, cell) = self.lstm(embedded)
+        output, (hidden, cell) = self.lstm(embed)
         # |output| = (batch_size, seq_len, hidden_dim)
         # |hidden| = (n_layers, batch_size, hidden_dim)
         # |cell| = (n_layers, batch_size, hidden_dim)
@@ -63,10 +63,10 @@ class LSTMLanguageModel(nn.Module):
         x = x.to(device)
         y = y.to(device)
 
-        logit = self.forward(x)
+        logits = self.forward(x)
         # |logit| = (batch_size, seq_len, vocab_size)
 
-        loss = criterion(logit.view(-1, logit.size(-1)), y.view(-1))
+        loss = criterion(logits.view(-1, logits.size(-1)), y.view(-1))
         # |loss| = (1, )
 
         return loss

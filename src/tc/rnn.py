@@ -38,10 +38,10 @@ class LSTMClassifier(nn.Module):
     def forward(self, x):
         # |x| = (batch_size, seq_len)
 
-        embedded = self.dropout(self.embedding(x))
-        # |embedded| = (batch_size, seq_len, embedding_dim)
+        embed = self.dropout(self.embedding(x))
+        # |embed| = (batch_size, seq_len, embedding_dim)
 
-        output, (hidden, cell) = self.lstm(embedded)
+        output, (hidden, cell) = self.lstm(embed)
         # |output| = (batch_size, seq_len, hidden_dim * 2)
         # |hidden| = (n_layers * 2, batch_size, hidden_dim)
         # |cell| = (n_layers * 2, batch_size, hidden_dim)
@@ -66,10 +66,15 @@ class LSTMClassifier(nn.Module):
         x = x.to(device)
         y = y.to(device)
 
-        logit = self.forward(x)
-        # |logit| = (batch_size, output_dim)
+        logits = self.forward(x)
+        # |logits| = (batch_size, output_dim)
 
-        loss = criterion(logit, y)
+        loss = criterion(
+            logits.view(-1, logits.size(-1)),
+            y.view(
+                -1,
+            ),
+        )
         # |loss| = (1, )
 
         return loss

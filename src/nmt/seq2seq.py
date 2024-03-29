@@ -71,10 +71,10 @@ class Seq2SeqTranslator(nn.Module):
         hidden = self.dropout(dec_out)
         # |hidden| = (batch_size, seq_len_dec, hidden_dim)
 
-        logit = self.fc(hidden)
-        # |logit| = (batch_size, seq_len_dec, vocab_size)
+        logits = self.fc(hidden)
+        # |logits| = (batch_size, seq_len_dec, vocab_size)
 
-        return logit
+        return logits
 
     def compute_loss(self, batch, criterion):
         enc_x = batch["input_ids"]
@@ -93,10 +93,10 @@ class Seq2SeqTranslator(nn.Module):
         attention_mask = attention_mask.to(device)
         y = y.to(device)
 
-        logit = self.forward(enc_x, dec_x, attention_mask)
-        # |logit| = (batch_size, seq_len_dec, vocab_size)
+        logits = self.forward(enc_x, dec_x, attention_mask)
+        # |logits| = (batch_size, seq_len_dec, vocab_size)
 
-        loss = criterion(logit.view(-1, logit.size(-1)), y.view(-1))
+        loss = criterion(logits.view(-1, logits.size(-1)), y.view(-1))
         # |loss| = (1, )
 
         return loss
@@ -108,8 +108,8 @@ class Seq2SeqTranslator(nn.Module):
         dec_ids = [bos_token_id]
         for _ in range(max_length):
             dec_x = torch.tensor([dec_ids]).to(device)
-            logit = self.forward(enc_x, dec_x, attention_mask)
-            pred = logit.argmax(dim=-1)[0, -1].item()
+            logits = self.forward(enc_x, dec_x, attention_mask)
+            pred = logits.argmax(dim=-1)[0, -1].item()
             if pred == eos_token_id:
                 break
             dec_ids.append(pred)
