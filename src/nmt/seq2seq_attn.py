@@ -39,9 +39,12 @@ class Seq2SeqAttention(nn.Module):
             batch_first=True,  # If False, input shape is (seq_len, batch_size, input_size).
         )
 
+        self.attn_w = nn.Linear(hidden_dim, hidden_dim)
+        self.concat_w = nn.Linear(hidden_dim * 2, hidden_dim)
+
         self.dropout = nn.Dropout(dropout)
         # Note that we use "vocab_size" sence we are prediting vocab.
-        self.fc = nn.Linear(hidden_dim * 2, vocab_size)
+        self.fc = nn.Linear(hidden_dim, vocab_size)
 
     def forward(self, enc_x, dec_x, attention_mask):
         # |enc_x| = (batch_size, seq_len_enc)
@@ -69,18 +72,16 @@ class Seq2SeqAttention(nn.Module):
         # |hidden| = (n_layers, batch_size, hidden_dim)
         # |cell| = (n_layers, batch_size, hidden_dim)
 
-        attn_out = self.dot_product_attention(dec_out, enc_out, enc_out, attention_mask)
-        # |attn_out| = (batch_size, seq_len_dec, hidden_dim)
-        hidden = torch.cat([dec_out, attn_out], dim=-1)
-        # |hidden| = (batch_size, seq_len_dec, hidden_dim * 2)
+        hidden = self.dot_product_attention(dec_out, enc_out, enc_out, attention_mask)
+        # |hidden| = (batch_size, seq_len_dec, hidden_dim)
 
         hidden = self.dropout(hidden)
         # |hidden| = (batch_size, seq_len_dec, hidden_dim * 2)
 
-        logit = self.fc(hidden)
-        # |logit| = (batch_size, seq_len_dec, vocab_size)
+        logits = self.fc(hidden)
+        # |logits| = (batch_size, seq_len_dec, vocab_size)
 
-        return logit
+        return logits
 
     def dot_product_attention(self, Q, K, V, attention_mask):
         # |Q| = (batch_size, Q_len, hidden_dim)
@@ -88,6 +89,8 @@ class Seq2SeqAttention(nn.Module):
         # |V| = (batch_size, K_len, hidden_dim)
         # |attention_mask| = (batch_size, K_len)
 
+        Q = self.attn_w(Q)
+        # |Q| = (batch_size, Q_len, hidden_dim)
         attn_score = torch.matmul(Q, K.transpose(-2, -1).contiguous())
         # |attn_score| = (batch_size, Q_len, K_len)
         attention_mask = attention_mask.unsqueeze(1)
@@ -98,7 +101,12 @@ class Seq2SeqAttention(nn.Module):
         # |attn_prob| = (batch_size, Q_len, K_len)
         attn_out = torch.matmul(attn_prob, V)
         # |attn_out| = (batch_size, Q_len, hidden_dim)
-        return attn_out
+        hidden = torch.cat([Q, attn_out], dim=-1)
+        # |hidden| = (batch_size, Q_len, hidden_dim * 2)
+        hidden = self.concat_w(hidden)
+        hidden = F.tanh(hidden)
+        # |hidden| = (batch_size, Q_len, hidden_dim)
+        return hidden
 
     def compute_loss(self, batch, criterion):
         enc_x = batch["input_ids"]
@@ -117,10 +125,10 @@ class Seq2SeqAttention(nn.Module):
         attention_mask = attention_mask.to(device)
         y = y.to(device)
 
-        logit = self.forward(enc_x, dec_x, attention_mask)
+        logits = self.forward(enc_x, dec_x, attention_mask)
         # |logit| = (batch_size, seq_len_dec, vocab_size)
 
-        loss = criterion(logit.view(-1, logit.size(-1)), y.view(-1))
+        loss = criterion(logits.view(-1, logits.size(-1)), y.view(-1))
         # |loss| = (1, )
 
         return loss
@@ -132,8 +140,8 @@ class Seq2SeqAttention(nn.Module):
         dec_ids = [bos_token_id]
         for _ in range(max_length):
             dec_x = torch.tensor([dec_ids]).to(device)
-            logit = self.forward(enc_x, dec_x, attention_mask)
-            pred = logit.argmax(dim=-1)[0, -1].item()
+            logits = self.forward(enc_x, dec_x, attention_mask)
+            pred = logits.argmax(dim=-1)[0, -1].item()
             if pred == eos_token_id:
                 break
             dec_ids.append(pred)
