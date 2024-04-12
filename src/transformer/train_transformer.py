@@ -33,11 +33,10 @@ def define_config():
     p.add_argument("--tokenizer", required=True)
     p.add_argument("--output_dir", required=True)
 
-    p.add_argument("--batch_size", type=int, default=128)
     p.add_argument("--n_epochs", type=int, default=40)
     p.add_argument("--lr", type=float, default=1e-4)
     p.add_argument("--weight_decay", type=float, default=0.01)
-    p.add_argument("--min_warmup_steps", type=int, default=1000)
+    p.add_argument("--warmup_steps", type=int, default=1000)
     p.add_argument("--lr_scheduler_type", type=str, default="linear")
     p.add_argument("--max_grad_norm", type=float, default=5.0)
 
@@ -130,7 +129,7 @@ def main(config):
     save_steps = eval_steps * int(
         config.num_eval_steps_per_epoch / config.num_save_steps_per_epoch
     )
-    warmup_steps = config.min_warmup_steps
+    warmup_steps = config.warmup_steps
 
     final_model_name = wandb_init(config)
 
