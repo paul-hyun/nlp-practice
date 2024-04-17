@@ -8,6 +8,7 @@
 - pip install accelerate==0.27.2
 - pip install scikit-learn
 - pip install wandb
+- pip install ipywidgets
 
 - pip install gensim
 - pip install wikiextractor
