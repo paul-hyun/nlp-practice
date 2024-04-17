@@ -1,5 +1,5 @@
 #!/bin/sh
-python train_rnn.py \
+python3.9 train_rnn.py \
     --model_name ${1} \
     --train_tsv_fn '../../data/nsmc/train_dataset.tsv' \
     --valid_tsv_fn '../../data/nsmc/valid_dataset.tsv' \

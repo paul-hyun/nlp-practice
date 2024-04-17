@@ -1,5 +1,5 @@
 #!/bin/sh
-python finetune_bert_tc.py \
+python3.9 finetune_bert_tc.py \
     --model_name ${1} \
     --train_tsv_fn '../../data/nsmc/train_dataset.tsv' \
     --valid_tsv_fn '../../data/nsmc/valid_dataset.tsv' \

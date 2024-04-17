@@ -1,5 +1,5 @@
 #!/bin/bash
-python train_transformer.py \
+python3.9 train_transformer.py \
     --model_name ${1} \
     --train_src_fn "../../data/aihub_koen/train.ko" \
     --train_tgt_fn "../../data/aihub_koen/train.en" \

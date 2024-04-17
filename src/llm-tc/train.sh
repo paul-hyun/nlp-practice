@@ -1,5 +1,5 @@
 #!/bin/bash
-python train.py \
+python3.9 train.py \
     --model_name ${1} \
     --train_tsv_fn '../../data/nsmc/train.tsv' \
     --test_tsv_fn '../../data/nsmc/test.tsv' \

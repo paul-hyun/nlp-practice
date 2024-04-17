@@ -1,2 +1,2 @@
 #!/bin/bash
-python preprocess.py --aihub_dir "../../data/aihub_koen"
+python3.9 preprocess.py --aihub_dir "../../data/aihub_koen"
